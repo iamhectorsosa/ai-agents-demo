@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	infoPrefix    = lipgloss.NewStyle().SetString("[ INFO ]").Foreground(lipgloss.Color("#0ea5e9"))
+	systemPrefix  = lipgloss.NewStyle().SetString("[ SYSTEM ]").Foreground(lipgloss.Color("#0ea5e9"))
 	warningPrefix = lipgloss.NewStyle().SetString("[ WARNING ]").Foreground(lipgloss.Color("#f59e0b"))
 	errorPrefix   = lipgloss.NewStyle().SetString("[ ERROR ]").Foreground(lipgloss.Color("#f43f5e"))
 	userPrefix    = lipgloss.NewStyle().SetString("[ USER ]").Foreground(lipgloss.Color("#14b8a6"))
@@ -29,8 +29,8 @@ func NewLogger() *logger {
 	return &logger{writer: os.Stdout}
 }
 
-func (l *logger) Info(message string, args ...any) {
-	fmt.Fprintf(l.writer, "%s %s %s %s\n", getTimestamp(), infoPrefix, message, formatKeyValueArgs(args))
+func (l *logger) System(message string, args ...any) {
+	fmt.Fprintf(l.writer, "%s %s %s %s\n", getTimestamp(), systemPrefix, message, formatKeyValueArgs(args))
 }
 
 func (l *logger) Warning(message string, args ...any) {

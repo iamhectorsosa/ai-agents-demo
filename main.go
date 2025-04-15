@@ -88,6 +88,7 @@ func main() {
 	}
 
 	startTime := time.Now()
+	cycleCount := 1
 	for {
 		_, resp, err := completion.
 			WithMessage(message).
@@ -101,6 +102,8 @@ func main() {
 			break
 		}
 
+		log.System("completion executed", "cycleCount", cycleCount, "duration", time.Since(startTime), "usage", resp.Usage)
+
 		for _, choice := range resp.Choices {
 			if choice.Message.Content == "" {
 				continue
@@ -108,12 +111,13 @@ func main() {
 			switch role := choice.Message.Role; role {
 			case openroutergo.RoleAssistant:
 				log.Agent(choice.Message.Content)
-			case openroutergo.RoleUser:
-				log.User(choice.Message.Content)
 			}
 		}
 
 		shouldContinue := false
+		draftMessage := openroutergo.ChatCompletionMessage{
+			Role: openroutergo.RoleTool,
+		}
 
 		for _, choice := range resp.Choices {
 			if choice.Message.HasToolCalls() {
@@ -127,14 +131,9 @@ func main() {
 							log.Error("Failed to unmarshal names response", "duration", time.Since(startTime), "err", err)
 							break
 						}
-						log.Info("Ran tool", "duration", time.Since(startTime), "toolName", toolName, "names", names)
+						log.System("Ran tool", "duration", time.Since(startTime), "toolName", toolName, "names", names)
 
-						message = openroutergo.ChatCompletionMessage{
-							Role:       openroutergo.RoleTool,
-							ToolCallID: tool.ID,
-							Name:       toolName,
-							Content:    toolArguments,
-						}
+						draftMessage.ToolCallID, draftMessage.Name, draftMessage.Content = tool.ID, toolName, toolArguments
 						shouldContinue = true
 					case "analyzeSentiment":
 						toolArguments := tool.Function.Arguments
@@ -143,14 +142,9 @@ func main() {
 							log.Error("Failed to unmarshal sentiment response", "duration", time.Since(startTime), "err", err)
 							break
 						}
-						log.Info("Ran tool", "duration", time.Since(startTime), "toolName", toolName, "sentiment", sentiment)
+						log.System("Ran tool", "duration", time.Since(startTime), "toolName", toolName, "sentiment", sentiment)
 
-						message = openroutergo.ChatCompletionMessage{
-							Role:       openroutergo.RoleTool,
-							ToolCallID: tool.ID,
-							Name:       toolName,
-							Content:    toolArguments,
-						}
+						draftMessage.ToolCallID, draftMessage.Name, draftMessage.Content = tool.ID, toolName, toolArguments
 						shouldContinue = true
 					}
 				}
@@ -158,8 +152,11 @@ func main() {
 		}
 
 		if !shouldContinue {
-			log.Info("No tool results", "duration", time.Since(startTime))
+			log.System("No tool results", "duration", time.Since(startTime))
 			break
 		}
+
+		message = draftMessage
+		cycleCount++
 	}
 }

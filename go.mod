@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/eduardolat/openroutergo v0.1.0
+	github.com/joho/godotenv v1.5.1
 )
 
 require (

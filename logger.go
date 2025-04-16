@@ -65,27 +65,32 @@ func formatKeyValueArgs(args []any) string {
 			continue
 		}
 
-		sb.WriteString(keyFormatter(key))
-
 		value := args[i+1]
-		sb.WriteString("=")
-
-		jsonBytes, err := json.MarshalIndent(value, "", " ")
-		if err == nil && len(jsonBytes) > 2 && (jsonBytes[0] == '{' || jsonBytes[0] == '[') {
-			lines := strings.Split(string(jsonBytes), "\n")
-			for i, line := range lines {
-				if i > 0 && i < len(lines)-1 {
-					sb.WriteString(" ")
+		switch v := value.(type) {
+		case string:
+			sb.WriteString(keyFormatter(key) + "=")
+			sb.WriteString(fmt.Sprintf("%q", v))
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, bool:
+			sb.WriteString(keyFormatter(key) + "=")
+			sb.WriteString(fmt.Sprintf("%+v", v))
+		default:
+			jsonBytes, err := json.MarshalIndent(value, "", " ")
+			if err == nil && len(jsonBytes) > 2 && (jsonBytes[0] == '{' || jsonBytes[0] == '[') {
+				sb.WriteString("\n" + keyFormatter(key) + "=")
+				lines := strings.Split(string(jsonBytes), "\n")
+				for i, line := range lines {
+					if i > 0 && i < len(lines)-1 {
+						sb.WriteString(" ")
+					}
+					sb.WriteString(line)
+					if i < len(lines)-1 {
+						sb.WriteString("\n")
+					}
 				}
-				sb.WriteString(line)
-				if i < len(lines)-1 {
-					sb.WriteString("\n")
-				}
+			} else {
+				sb.WriteString(keyFormatter(key) + "=")
+				sb.WriteString(fmt.Sprintf("%+v", v))
 			}
-		} else if str, isString := value.(string); isString {
-			sb.WriteString(fmt.Sprintf("%q", str))
-		} else {
-			sb.WriteString(fmt.Sprintf("%+v", value))
 		}
 
 		if i != len(args)-2 {

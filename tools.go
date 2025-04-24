@@ -2,6 +2,10 @@ package main
 
 import "github.com/eduardolat/openroutergo"
 
+type ThoughtInput struct {
+	Thought string `json:"thought"`
+}
+
 type EntitiesInput struct {
 	Entities []struct {
 		Name    string `json:"name"`
@@ -13,6 +17,21 @@ type EntitiesInput struct {
 type SentimentAnalysisInput struct {
 	Sentiment string  `json:"sentiment"`
 	Score     float64 `json:"score"`
+}
+
+var ThinkTool = openroutergo.ChatCompletionTool{
+	Name:        "think_tool",
+	Description: "Use the tool to think about something. It will not obtain new information, but use it when complex reasoning is needed.",
+	Parameters: map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"thought": map[string]any{
+				"type":        "string",
+				"description": "A thought to think about.",
+			},
+		},
+		"required": []string{"thought"},
+	},
 }
 
 var PrintEntitiesTool = openroutergo.ChatCompletionTool{

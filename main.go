@@ -35,6 +35,7 @@ func main() {
 		WithContext(context.Background()).
 		WithModel(cfg.Model).
 		WithModelFallback(cfg.ModelFallback).
+		WithTool(ThinkTool).
 		WithTool(PrintEntitiesTool).
 		WithTool(AnalyzeSentimentTool).
 		WithSystemMessage(systemPrompt)
@@ -43,6 +44,13 @@ func main() {
 		Role:    openroutergo.RoleUser,
 		Content: "Write me a short and concise rhyme about Jozef and Eric from Webscope. They met last week in Prague.",
 	}
+	// message.Content = `Write me a REALLY short and concise rhyme about this murder mystery,
+	//  but solve it in the rhyme conclusion:
+	//  A renowned software architect is found murdered in a locked server room during a hackathon,
+	//  with the CTO, lead developer, security officer, and newly hired intern
+	//  all present in the building when the power grid was compromised.
+	//  The victim's revolutionary source code was completely erased,
+	//  yet the deletion occurred from his personal terminal after time of death.`
 	log.User(message.Content)
 
 	startTime := time.Now()
@@ -86,6 +94,15 @@ func main() {
 				tools := choice.Message.ToolCalls
 				for _, tool := range tools {
 					switch toolName := tool.Function.Name; toolName {
+					case ThinkTool.Name:
+						toolArguments := tool.Function.Arguments
+						var thought ThoughtInput
+						if err := json.Unmarshal([]byte(toolArguments), &thought); err != nil {
+							log.Error("Unmarshal thought input", "duration", time.Since(startTime), "err", err)
+							break
+						}
+						shouldContinue, inputs = true, thought
+						draftMessage.ToolCallID, draftMessage.Name, draftMessage.Content = tool.ID, toolName, toolArguments
 					case PrintEntitiesTool.Name:
 						toolArguments := tool.Function.Arguments
 						var entities EntitiesInput

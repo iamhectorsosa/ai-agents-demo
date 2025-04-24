@@ -7,7 +7,7 @@
 * Go 1.24.0
 * OpenRouter API Key
 
-For environment variables please check the example file: (./.env.example)[./.env.example]
+For environment variables please check the example file: [./.env.example](./.env.example)
 
 ## Overview
 

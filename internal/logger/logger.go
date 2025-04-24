@@ -1,4 +1,4 @@
-package main
+package logger
 
 import (
 	"encoding/json"
@@ -21,31 +21,31 @@ var (
 	keyFormatter  = lipgloss.NewStyle().Foreground(lipgloss.Color("#737373")).Render
 )
 
-type logger struct {
+type Logger struct {
 	writer io.Writer
 }
 
-func NewLogger() *logger {
-	return &logger{writer: os.Stdout}
+func New() *Logger {
+	return &Logger{writer: os.Stdout}
 }
 
-func (l *logger) System(message string, args ...any) {
+func (l *Logger) System(message string, args ...any) {
 	fmt.Fprintf(l.writer, "%s %s %s %s\n", getTimestamp(), systemPrefix, message, formatKeyValueArgs(args))
 }
 
-func (l *logger) Warning(message string, args ...any) {
+func (l *Logger) Warning(message string, args ...any) {
 	fmt.Fprintf(l.writer, "%s %s %s %s\n", getTimestamp(), warningPrefix, message, formatKeyValueArgs(args))
 }
 
-func (l *logger) Error(message string, args ...any) {
+func (l *Logger) Error(message string, args ...any) {
 	fmt.Fprintf(l.writer, "%s %s %s %s\n", getTimestamp(), errorPrefix, message, formatKeyValueArgs(args))
 }
 
-func (l *logger) User(message string, args ...any) {
+func (l *Logger) User(message string, args ...any) {
 	fmt.Fprintf(l.writer, "%s %s %s %s\n", getTimestamp(), userPrefix, message, formatKeyValueArgs(args))
 }
 
-func (l *logger) Agent(message string, args ...any) {
+func (l *Logger) Agent(message string, args ...any) {
 	fmt.Fprintf(l.writer, "%s %s %s %s\n", getTimestamp(), agentPrefix, message, formatKeyValueArgs(args))
 }
 

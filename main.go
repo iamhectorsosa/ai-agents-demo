@@ -6,11 +6,15 @@ import (
 	"time"
 
 	"github.com/eduardolat/openroutergo"
+	"github.com/iamhectorsosa/ai-agents-demo/internal/config"
+	"github.com/iamhectorsosa/ai-agents-demo/internal/logger"
+	"github.com/iamhectorsosa/ai-agents-demo/internal/repository/tools"
 )
 
 func main() {
-	log := NewLogger()
-	cfg, err := NewConfig()
+	// INFO: ⚙️ setup
+	log := logger.New()
+	cfg, err := config.New()
 	if err != nil {
 		log.Error("loading config", "err", err)
 		return
@@ -31,33 +35,28 @@ func main() {
   Help the user understand your actions and the reason why you called the tools you used.
 `
 
-	baseCompletion := client.NewChatCompletion().
+	compl := client.NewChatCompletion().
 		WithContext(context.Background()).
 		WithModel(cfg.Model).
 		WithModelFallback(cfg.ModelFallback).
-		WithTool(ThinkTool).
-		WithTool(PrintEntitiesTool).
-		WithTool(AnalyzeSentimentTool).
+		WithTool(tools.ThinkTool).
+		WithTool(tools.PrintEntitiesTool).
+		WithTool(tools.AnalyzeSentimentTool).
 		WithSystemMessage(systemPrompt)
 
+	// INFO: 👤 capture the user prompt
 	message := openroutergo.ChatCompletionMessage{
 		Role:    openroutergo.RoleUser,
 		Content: "Write me a short and concise rhyme about Jozef and Eric from Webscope. They met last week in Prague.",
 	}
-	// message.Content = `Write me a REALLY short and concise rhyme about this murder mystery,
-	//  but solve it in the rhyme conclusion:
-	//  A renowned software architect is found murdered in a locked server room during a hackathon,
-	//  with the CTO, lead developer, security officer, and newly hired intern
-	//  all present in the building when the power grid was compromised.
-	//  The victim's revolutionary source code was completely erased,
-	//  yet the deletion occurred from his personal terminal after time of death.`
 	log.User(message.Content)
 
+	// INFO: 🏁 fire up the agent
 	startTime := time.Now()
 	cycleCount := 1
 
 	for {
-		_, resp, err := baseCompletion.
+		_, resp, err := compl.
 			WithMessage(message).
 			Execute()
 		if err != nil {
@@ -71,6 +70,7 @@ func main() {
 
 		log.System("Completion executed", "cycleCount", cycleCount, "duration", time.Since(startTime), "usage", resp.Usage)
 
+		// INFO: 🧐 process the response - check messages
 		for _, choice := range resp.Choices {
 			if choice.Message.Content == "" {
 				continue
@@ -83,44 +83,49 @@ func main() {
 			}
 		}
 
+		// INFO: 📝 prepare for next LLM execution
 		shouldContinue := false
 		var inputs any
 		draftMessage := openroutergo.ChatCompletionMessage{
 			Role: openroutergo.RoleTool,
 		}
 
+		// INFO: 🧐 process the response - execute handlers
 		for _, choice := range resp.Choices {
 			if choice.Message.HasToolCalls() {
-				tools := choice.Message.ToolCalls
-				for _, tool := range tools {
+				tc := choice.Message.ToolCalls
+				for _, tool := range tc {
 					switch toolName := tool.Function.Name; toolName {
-					case ThinkTool.Name:
+					case tools.ThinkTool.Name:
 						toolArguments := tool.Function.Arguments
-						var thought ThoughtInput
+						var thought tools.ThoughtInput
 						if err := json.Unmarshal([]byte(toolArguments), &thought); err != nil {
 							log.Error("Unmarshal thought input", "duration", time.Since(startTime), "err", err)
 							break
 						}
 						shouldContinue, inputs = true, thought
 						draftMessage.ToolCallID, draftMessage.Name, draftMessage.Content = tool.ID, toolName, toolArguments
-					case PrintEntitiesTool.Name:
+
+					case tools.PrintEntitiesTool.Name:
 						toolArguments := tool.Function.Arguments
-						var entities EntitiesInput
+						var entities tools.EntitiesInput
 						if err := json.Unmarshal([]byte(toolArguments), &entities); err != nil {
 							log.Error("Unmarshal entities input", "duration", time.Since(startTime), "err", err)
 							break
 						}
 						shouldContinue, inputs = true, entities
 						draftMessage.ToolCallID, draftMessage.Name, draftMessage.Content = tool.ID, toolName, toolArguments
-					case AnalyzeSentimentTool.Name:
+
+					case tools.AnalyzeSentimentTool.Name:
 						toolArguments := tool.Function.Arguments
-						var sentiment SentimentAnalysisInput
+						var sentiment tools.SentimentAnalysisInput
 						if err := json.Unmarshal([]byte(toolArguments), &sentiment); err != nil {
 							log.Error("Unmarshal sentiment input", "duration", time.Since(startTime), "err", err)
 							break
 						}
 						shouldContinue, inputs = true, sentiment
 						draftMessage.ToolCallID, draftMessage.Name, draftMessage.Content = tool.ID, toolName, toolArguments
+
 					default:
 						log.Warning("unexpected tool call", "toolName", toolName, "inputs", tool.Function.Arguments)
 					}
@@ -128,11 +133,13 @@ func main() {
 			}
 		}
 
+		// INFO: 🧐 evaluate next execution
 		if !shouldContinue {
 			log.System("No further requests, exiting...", "duration", time.Since(startTime))
 			break
 		}
 
+		// INFO: 📢 report handlers
 		log.System("Tool executed", "duration", time.Since(startTime), "toolName", draftMessage.Name, "inputs", inputs)
 		message = draftMessage
 		cycleCount++

@@ -17,7 +17,7 @@ type SentimentAnalysisInput struct {
 
 var PrintEntitiesTool = openroutergo.ChatCompletionTool{
 	Name:        "print_entities_tool",
-	Description: "Extract all named entities provided only by the user before generating a response",
+	Description: "Extract all named entities provided only by the user before generating a response.",
 	Parameters: map[string]any{
 		"type": "object",
 		"properties": map[string]any{
@@ -40,7 +40,7 @@ var PrintEntitiesTool = openroutergo.ChatCompletionTool{
 
 var AnalyzeSentimentTool = openroutergo.ChatCompletionTool{
 	Name:        "anaylze_sentiment_tool",
-	Description: "Analyze the sentiment of the response generated",
+	Description: "Analyze the sentiment of the response generated. This tool should only be ran at the end of generated text to provide insight on the Agent/LLM response.",
 	Parameters: map[string]any{
 		"type": "object",
 		"properties": map[string]any{

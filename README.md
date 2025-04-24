@@ -2,6 +2,13 @@
 
 ![Demo](./demo.gif)
 
+## Requirements
+
+* Go 1.24.0
+* OpenRouter API Key
+
+For environment variables please check the example file: (./.env.example)[./.env.example]
+
 ## Overview
 
 This project demonstrates an AI Agent system that can perform agentic processes - autonomous, goal-directed actions using large language models (LLMs). The agent can understand context, make decisions, and use specialized tools to accomplish tasks.

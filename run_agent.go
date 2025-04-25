@@ -11,7 +11,13 @@ import (
 	"github.com/iamhectorsosa/ai-agents-demo/internal/repository/tools"
 )
 
-func runAgent(log *logger.Logger, cfg *config.Config, client *openroutergo.Client, systemPrompt, userPrompt string) {
+func runAgent(
+	log *logger.Logger,
+	cfg *config.Config,
+	client *openroutergo.Client,
+	systemPrompt,
+	userPrompt string,
+) {
 	// INFO: ⚙️ setup client
 	compl := client.NewChatCompletion().
 		WithContext(context.Background()).

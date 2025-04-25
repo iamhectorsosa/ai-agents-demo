@@ -9,7 +9,13 @@ import (
 	"github.com/iamhectorsosa/ai-agents-demo/internal/logger"
 )
 
-func runWorkflow(log *logger.Logger, cfg *config.Config, client *openroutergo.Client, systemPrompt, userPrompt string) {
+func runWorkflow(
+	log *logger.Logger,
+	cfg *config.Config,
+	client *openroutergo.Client,
+	systemPrompt,
+	userPrompt string,
+) {
 	// INFO: ⚙️ setup client
 	compl := client.NewChatCompletion().
 		WithContext(context.Background()).
